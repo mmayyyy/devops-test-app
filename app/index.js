@@ -1,25 +1,38 @@
-const lynx = require('lynx');
+const lynx = require("lynx");
 
-// instantiate a metrics client
-//  Note: the metric hostname is hardcoded here
-const metrics = new lynx('localhost', 8125);
+// Read environment variables or set default values
+const statsd_host = process.env.STATSD_HOST || "localhost";
+const statsd_port = parseInt(process.env.STATSD_PORT, 10) || 8125;
+const metric_interval = parseInt(process.env.METRIC_INTERVAL, 10) || 3000;
+const metric_name = process.env.METRIC_NAME || "test.core.delay";
+const environment = process.env.ENVIRONMENT || "n/a";
 
-// sleep for a given number of milliseconds
+console.log(`Configurations:`);
+console.log(` - Environment: ${environment}`);
+console.log(` - StatsD Host: ${statsd_host}`);
+console.log(` - StatsD Port: ${statsd_port}`);
+console.log(` - Metric Interval: ${metric_interval}ms`);
+console.log(` - Metric Name: ${metric_name}`);
+
+// Instantiate a metrics client
+const metrics = new lynx(statsd_host, statsd_port);
+
+// Sleep for a given number of milliseconds
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Main function to send metrics
 async function main() {
-  // send message to the metrics server
-  metrics.timing('test.core.delay', Math.random() * 1000);
-
-  // sleep for a random number of milliseconds to avoid flooding metrics server
-  return sleep(3000);
+  const metricValue = Math.random() * 1000;
+  metrics.timing(metric_name, metricValue);
+  return sleep(metric_interval);
 }
 
-// infinite loop
+// Infinite loop to keep sending metrics
 (async () => {
-  console.log("🚀🚀🚀");
-  while (true) { await main() }
-})()
-  .then(console.log, console.error);
+  console.log(`🚀🚀🚀 Metrics sending started (${environment})...`);
+  while (true) {
+    await main();
+  }
+})().then(console.log, console.error);
