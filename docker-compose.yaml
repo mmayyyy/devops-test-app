@@ -1,0 +1,26 @@
+version: "3"
+services:
+  nodeapp:
+    image: devops-node-app
+    build: ./app/
+    environment:
+      - STATSD_HOST=statsd
+      - STATSD_PORT=8125
+      - ENVIRONMENT=development
+    networks:
+      - my_network
+
+  statsd:
+    image: graphiteapp/graphite-statsd:1.1.10-5
+    networks:
+      - my_network
+    ports:
+      - "80:80"
+      - "2003-2004:2003-2004"
+      - "2023-2024:2023-2024"
+      - "8125:8125/udp"
+      - "8126:8126"
+
+networks:
+  my_network:
+    driver: bridge
